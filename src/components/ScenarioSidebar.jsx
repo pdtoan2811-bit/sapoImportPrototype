@@ -1,7 +1,15 @@
 
 import React, { useState } from 'react';
-import { Play, RotateCcw, Monitor } from 'lucide-react';
+import { Play, RotateCcw, Monitor, CheckCircle2, AlertOctagon, AlertTriangle, Info, X } from 'lucide-react';
 import { SCENARIOS } from '../utils/mockScenarios';
+
+const TYPE_CONFIG = {
+    success: { color: '#10B981', bg: '#ECFDF5', icon: CheckCircle2 },
+    error: { color: '#EF4444', bg: '#FEF2F2', icon: AlertOctagon },
+    warning: { color: '#F59E0B', bg: '#FFFBEB', icon: AlertTriangle },
+    info: { color: '#3B82F6', bg: '#EFF6FF', icon: Info },
+    neutral: { color: '#6B7280', bg: '#F3F4F6', icon: RotateCcw }
+};
 
 const ScenarioSidebar = ({ onSelectScenario }) => {
     const [activeScenario, setActiveScenario] = useState(null);
@@ -16,22 +24,28 @@ const ScenarioSidebar = ({ onSelectScenario }) => {
         return (
             <button
                 onClick={() => setIsOpen(true)}
+                title="Mở Dev Tools"
                 style={{
                     position: 'fixed',
                     right: 0,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
+                    top: '20%',
                     background: '#1F2937',
                     color: 'white',
-                    padding: '12px 8px',
+                    padding: '12px 10px',
                     borderTopLeftRadius: '8px',
                     borderBottomLeftRadius: '8px',
                     zIndex: 9999,
                     cursor: 'pointer',
-                    boxShadow: '-2px 0 8px rgba(0,0,0,0.2)'
+                    boxShadow: '-2px 2px 8px rgba(0,0,0,0.2)',
+                    border: 'none',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '4px'
                 }}
             >
                 <Monitor size={20} />
+                <span style={{ fontSize: '10px', fontWeight: 600, writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>DEV</span>
             </button>
         );
     }
@@ -42,82 +56,108 @@ const ScenarioSidebar = ({ onSelectScenario }) => {
             right: 0,
             top: 0,
             bottom: 0,
-            width: '280px',
+            width: '320px',
             background: '#ffffff',
             borderLeft: '1px solid #E5E7EB',
-            boxShadow: '-4px 0 16px rgba(0,0,0,0.1)',
+            boxShadow: '-4px 0 24px rgba(0,0,0,0.1)',
             zIndex: 9999,
             display: 'flex',
             flexDirection: 'column',
-            padding: '20px'
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
         }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Monitor size={18} color="#0088FF" />
-                    Dev Scenarios
-                </h3>
+            {/* Header */}
+            <div style={{
+                padding: '16px 20px',
+                borderBottom: '1px solid #E5E7EB',
+                background: '#F9FAFB',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ background: '#E0F2FE', padding: '6px', borderRadius: '6px' }}>
+                        <Monitor size={18} color="#0284C7" />
+                    </div>
+                    <div>
+                        <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#111827' }}>Dev Scenarios</h3>
+                        <p style={{ margin: 0, fontSize: '11px', color: '#6B7280' }}>Mô phỏng các trường hợp nhập file</p>
+                    </div>
+                </div>
                 <button
                     onClick={() => setIsOpen(false)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6B7280' }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', padding: '4px' }}
                 >
-                    Min
+                    <X size={18} />
                 </button>
             </div>
 
-            <p style={{ fontSize: '12px', color: '#6B7280', marginTop: '-10px', marginBottom: '16px' }}>
-                Click a scenario to instantly inject mock data into the modal.
-            </p>
+            {/* List */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }} className="custom-scrollbar">
+                {Object.entries(SCENARIOS).map(([key, scenario]) => {
+                    const type = TYPE_CONFIG[scenario.type] || TYPE_CONFIG.neutral;
+                    const Icon = type.icon;
+                    const isActive = activeScenario === key;
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {Object.entries(SCENARIOS).map(([key, scenario]) => (
-                    <button
-                        key={key}
-                        onClick={() => handleSelect(key)}
-                        style={{
-                            padding: '12px',
-                            textAlign: 'left',
-                            background: activeScenario === key ? '#EFF6FF' : '#F9FAFB',
-                            border: activeScenario === key ? '1px solid #3B82F6' : '1px solid #E5E7EB',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            position: 'relative'
-                        }}
-                    >
-                        <div style={{ fontWeight: 600, fontSize: '13px', color: '#111827', marginBottom: '2px' }}>
-                            {scenario.name}
-                        </div>
-                        <div style={{ fontSize: '11px', color: '#6B7280', lineHeight: '1.4' }}>
-                            {scenario.description}
-                        </div>
-                        {activeScenario === key && (
-                            <div style={{ position: 'absolute', right: '8px', top: '12px' }}>
-                                <Play size={12} color="#3B82F6" fill="#3B82F6" />
+                    if (key === 'EMPTY_STATE') return null; // Render Reset separately
+
+                    return (
+                        <button
+                            key={key}
+                            onClick={() => handleSelect(key)}
+                            style={{
+                                textAlign: 'left',
+                                background: isActive ? '#F0F9FF' : 'white',
+                                border: isActive ? '1px solid #0EA5E9' : '1px solid #E5E7EB',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                position: 'relative',
+                                padding: '0',
+                                overflow: 'hidden',
+                                boxShadow: isActive ? '0 2px 4px rgba(14, 165, 233, 0.1)' : '0 1px 2px rgba(0,0,0,0.05)'
+                            }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'stretch' }}>
+                                <div style={{ width: '4px', backgroundColor: type.color }}></div>
+                                <div style={{ padding: '12px', flex: 1 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                        <Icon size={16} color={type.color} />
+                                        <span style={{ fontWeight: 600, fontSize: '13px', color: '#1F2937' }}>{scenario.name}</span>
+                                    </div>
+                                    <p style={{ margin: 0, fontSize: '12px', color: '#6B7280', lineHeight: '1.4' }}>
+                                        {scenario.description}
+                                    </p>
+                                </div>
                             </div>
-                        )}
-                    </button>
-                ))}
+                        </button>
+                    );
+                })}
             </div>
 
-            <div style={{ marginTop: 'auto', borderTop: '1px solid #E5E7EB', paddingTop: '16px' }}>
+            {/* Footer / Reset */}
+            <div style={{ padding: '16px', borderTop: '1px solid #E5E7EB', background: '#F9FAFB' }}>
                 <button
                     onClick={() => handleSelect('EMPTY_STATE')}
                     style={{
                         width: '100%',
-                        padding: '8px',
+                        padding: '10px',
                         background: 'white',
                         border: '1px solid #D1D5DB',
                         borderRadius: '6px',
                         color: '#374151',
                         fontSize: '13px',
+                        fontWeight: 500,
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '8px'
+                        gap: '8px',
+                        transition: 'background 0.2s'
                     }}
+                    onMouseOver={(e) => e.target.style.background = '#F3F4F6'}
+                    onMouseOut={(e) => e.target.style.background = 'white'}
                 >
-                    <RotateCcw size={14} /> Reset Application
+                    <RotateCcw size={16} /> Đặt lại trạng thái (Reset)
                 </button>
             </div>
         </div>
