@@ -7,7 +7,14 @@ export const SYSTEM_WAREHOUSES = [
   { id: 3, name: 'Kho tổng' },
   { id: 4, name: 'Cửa hàng Hai Bà Trưng' },
   { id: 5, name: 'Kho HCM' },
-  { id: 6, name: 'Kho Online' }
+  { id: 6, name: 'Kho Đà Nẵng' }
+];
+
+export const SYSTEM_PRICE_POLICIES = [
+  { id: 101, code: 'CTL628922', name: 'Facebook' },
+  { id: 102, code: 'CTL595297', name: 'Lazada' },
+  { id: 103, code: 'CTL582343', name: 'Chat OmniAI' },
+  { id: 104, code: 'CTL540995', name: 'POS' },
 ];
 
 // Extracted from template
@@ -49,50 +56,75 @@ export const processFile = async (file) => {
 };
 
 const analyzeHeaders = (fileHeaders) => {
-  const warehouseColumns = [];
-  const missingRequired = [];
-  const missingOptional = [];
   const matchedColumns = {}; // Map of SystemHeader -> FileHeader
 
-  // 1. Check against ALL Expected Headers (Sample First Approach)
+
+  // 1. Initial matching of EXPECTED_HEADERS to fileHeaders
   EXPECTED_HEADERS.forEach(expected => {
     if (fileHeaders.includes(expected)) {
-      matchedColumns[expected] = expected; // Auto-match exact names
-    } else {
-      if (expected.endsWith('*')) {
-        missingRequired.push(expected);
-      } else {
-        missingOptional.push(expected);
-      }
+      matchedColumns[expected] = expected;
+    } else if (expected.endsWith('*')) {
+      missingRequired.push(expected);
     }
   });
 
-  // 2. Identify Warehouse Columns
-  fileHeaders.forEach((header, index) => {
-    if (typeof header !== 'string') return;
+  // 3. Identify Warehouse Columns (suffix "_Tồn kho")
+  const warehouseColumns = fileHeaders
+    .filter(h => h.endsWith("_Tồn kho"))
+    .map(h => {
+      const extractedName = h.replace("_Tồn kho", "");
+      const matched = SYSTEM_WAREHOUSES.find(w => w.name.toLowerCase() === extractedName.toLowerCase());
+      return {
+        fileHeader: h,
+        extractedName: extractedName,
+        status: matched ? 'MATCHED' : 'UNKNOWN',
+        matchedWarehouse: matched || null
+      };
+    });
 
-    // Check for suffix "_Tồn kho"
-    if (header.endsWith('_Tồn kho')) {
-      const prefix = header.substring(0, header.length - '_Tồn kho'.length);
-      const match = findBestMatch(prefix);
+  // 4. Identify Price Policy Columns (suffix "_Thêm vào bảng giá")
+  const pricePolicyColumns = fileHeaders
+    .filter(h => h.endsWith("_Thêm vào bảng giá"))
+    .map(h => {
+      const extractedCode = h.replace("_Thêm vào bảng giá", "");
+      const matched = SYSTEM_PRICE_POLICIES.find(p => p.code.toLowerCase() === extractedCode.toLowerCase());
+      return {
+        fileHeader: h,
+        extractedCode: extractedCode,
+        status: matched ? 'MATCHED' : 'UNKNOWN',
+        matchedPolicy: matched || null
+      };
+    });
 
-      warehouseColumns.push({
-        fileHeader: header,
-        columnIndex: index,
-        extractedName: prefix,
-        status: match.status,
-        matchedWarehouse: match.warehouse
-      });
-    }
-  });
+  // 5. Calculate Missing Columns for Generic Mapping
+  // Create sets for quick lookup
+  const matchedExpectedHeaders = new Set(Object.keys(matchedColumns)); // Headers from EXPECTED_HEADERS that were found
+  const allExpectedHeadersSet = new Set(EXPECTED_HEADERS); // All expected headers
+  const specialColumnsInFile = new Set([
+    ...warehouseColumns.map(c => c.fileHeader),
+    ...pricePolicyColumns.map(c => c.fileHeader)
+  ]);
+
+  // Find MISSING OPTIONAL columns:
+  // These are headers present in the fileHeaders but are NOT:
+  // 1. An exact match for an EXPECTED_HEADER
+  // 2. A warehouse column
+  // 3. A price policy column
+  // 4. An EXPECTED_HEADER that was not found (those are in missingRequired)
+  const missingOptional = fileHeaders.filter(h =>
+    !allExpectedHeadersSet.has(h) && // Not an expected header (either matched or missing required)
+    !specialColumnsInFile.has(h) // Not a special column (warehouse or price policy)
+  );
 
   return {
     totalColumns: fileHeaders.length,
-    fileHeaders, // Return all file headers for mapping dropdowns
-    warehouseColumns,
-    missingRequired,
-    missingOptional,
-    matchedColumns
+    fileHeaders: fileHeaders,
+    missingRequired: missingRequired, // Only strict required missing
+    missingOptional: missingOptional, // Extra columns in file needing mapping
+    missingColumns: [], // Deprecated, kept for compatibility if needed
+    matchedColumns: matchedColumns,
+    warehouseColumns: warehouseColumns,
+    pricePolicyColumns: pricePolicyColumns
   };
 };
 

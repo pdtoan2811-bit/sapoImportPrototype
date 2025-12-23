@@ -141,6 +141,67 @@ export const SCENARIOS = {
         }
     },
 
+    PRICE_POLICY_MISMATCH: {
+        name: "Lệch mã bảng giá (Mismatch Price Policy)",
+        description: "File chứa mã bảng giá (CTL555) không tồn tại trong hệ thống. Cần map thủ công.",
+        type: "warning",
+        file: { name: "price_policy_mismatch.xlsx", size: 1024 * 56 },
+        systemWarehouses: [{ id: 1, name: 'Chi nhánh 1' }],
+        systemPricePolicies: [
+            { id: 101, code: 'CTL628922', name: 'Facebook' },
+            { id: 102, code: 'CTL595297', name: 'Lazada' }
+        ],
+        analysis: {
+            totalColumns: 40,
+            fileHeaders: ["Tên sản phẩm*", "CTL628922_Thêm vào bảng giá", "CTL555888_Thêm vào bảng giá"],
+            missingRequired: [],
+            missingOptional: [],
+            missingColumns: [],
+            matchedColumns: { "Tên sản phẩm*": "Tên sản phẩm*" },
+            warehouseColumns: [],
+            pricePolicyColumns: [
+                {
+                    fileHeader: "CTL628922_Thêm vào bảng giá",
+                    extractedCode: "CTL628922",
+                    status: "MATCHED",
+                    matchedPolicy: { id: 101, code: 'CTL628922', name: 'Facebook' }
+                },
+                {
+                    fileHeader: "CTL555888_Thêm vào bảng giá",
+                    extractedCode: "CTL555888",
+                    status: "UNKNOWN",
+                    matchedPolicy: null
+                }
+            ]
+        }
+    },
+
+    NO_PRICE_POLICY_STORE: {
+        name: "Cửa hàng KHÔNG có bảng giá (Warning)",
+        description: "Cửa hàng chưa có bảng giá. Cảnh báo bỏ qua các cột giá, nhưng vẫn CHO PHÉP nhập.",
+        type: "warning",
+        file: { name: "file_co_gia_nhung_store_thi_khong.xlsx", size: 1024 * 40 },
+        systemWarehouses: [{ id: 1, name: 'Chi nhánh 1' }],
+        systemPricePolicies: [], // EMPTY
+        analysis: {
+            totalColumns: 38,
+            fileHeaders: ["Tên sản phẩm*", "CTL628922_Thêm vào bảng giá"],
+            missingRequired: [],
+            missingOptional: [],
+            missingColumns: [],
+            matchedColumns: { "Tên sản phẩm*": "Tên sản phẩm*" },
+            warehouseColumns: [],
+            pricePolicyColumns: [
+                {
+                    fileHeader: "CTL628922_Thêm vào bảng giá",
+                    extractedCode: "CTL628922",
+                    status: "UNKNOWN", // Unknown because system has no policies to match
+                    matchedPolicy: null
+                }
+            ]
+        }
+    },
+
     EMPTY_STATE: {
         name: "Đặt lại trạnh thái (Reset)",
         description: "Xóa toàn bộ dữ liệu mẫu, quay về màn hình upload trống.",

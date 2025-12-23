@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { X, AlertTriangle, AlertOctagon, ChevronDown, CheckCircle, ExternalLink, Info } from 'lucide-react';
 import FileUploader from './FileUploader';
 import MappingResolution from './MappingResolution';
-import { processFile, SYSTEM_WAREHOUSES } from '../utils/importLogic';
+import { processFile, SYSTEM_WAREHOUSES, SYSTEM_PRICE_POLICIES } from '../utils/importLogic';
+import PricePolicyMapping from './PricePolicyMapping';
 
 
 const ImportModal = ({ onClose, externalScenario }) => {
@@ -11,9 +12,11 @@ const ImportModal = ({ onClose, externalScenario }) => {
     const [analysis, setAnalysis] = useState(null);
 
     const [warehouseMapping, setWarehouseMapping] = useState({});
+    const [pricePolicyMapping, setPricePolicyMapping] = useState({});
     const [standardMapping, setStandardMapping] = useState({});
     const [importType, setImportType] = useState('normal');
     const [currentSystemWarehouses, setCurrentSystemWarehouses] = useState(SYSTEM_WAREHOUSES);
+    const [currentSystemPricePolicies, setCurrentSystemPricePolicies] = useState(SYSTEM_PRICE_POLICIES);
 
     // Handle External Scenario Injection (Dev Mode)
     React.useEffect(() => {
@@ -46,6 +49,24 @@ const ImportModal = ({ onClose, externalScenario }) => {
                     });
                 }
                 setWarehouseMapping(initialWarehouseMapping);
+
+                // Set Custom Price Policies if scenario has them
+                if (externalScenario.systemPricePolicies) {
+                    setCurrentSystemPricePolicies(externalScenario.systemPricePolicies);
+                } else {
+                    setCurrentSystemPricePolicies(SYSTEM_PRICE_POLICIES);
+                }
+
+                // Initialize Price Policy Mapping
+                const initialPriceMapping = {};
+                if (result.pricePolicyColumns) {
+                    result.pricePolicyColumns.forEach(col => {
+                        if (col.status === 'MATCHED' && col.matchedPolicy) {
+                            initialPriceMapping[col.fileHeader] = col.matchedPolicy.id;
+                        }
+                    });
+                }
+                setPricePolicyMapping(initialPriceMapping);
             }
         }
     }, [externalScenario]);
@@ -68,6 +89,17 @@ const ImportModal = ({ onClose, externalScenario }) => {
             });
             setWarehouseMapping(initialWarehouseMapping);
 
+            // Initialize Price Policy Mapping
+            const initialPriceMapping = {};
+            if (result.pricePolicyColumns) {
+                result.pricePolicyColumns.forEach(col => {
+                    if (col.status === 'MATCHED' && col.matchedPolicy) {
+                        initialPriceMapping[col.fileHeader] = col.matchedPolicy.id;
+                    }
+                });
+            }
+            setPricePolicyMapping(initialPriceMapping);
+
         } catch (error) {
             console.error("Error reading file", error);
             alert("Lỗi đọc file");
@@ -85,6 +117,10 @@ const ImportModal = ({ onClose, externalScenario }) => {
         setWarehouseMapping(prev => ({ ...prev, [fileHeader]: warehouseId }));
     };
 
+    const handlePricePolicyMappingChange = (fileHeader, policyId) => {
+        setPricePolicyMapping(prev => ({ ...prev, [fileHeader]: policyId }));
+    };
+
     const handleStandardMappingChange = (systemField, fileHeader) => {
         setStandardMapping(prev => ({ ...prev, [systemField]: fileHeader }));
     };
@@ -100,9 +136,10 @@ const ImportModal = ({ onClose, externalScenario }) => {
 
         // 2. Get all file headers used in Warehouse Mapping
         const warehouseFileHeaders = analysis.warehouseColumns.map(c => c.fileHeader);
+        const pricePolicyFileHeaders = analysis.pricePolicyColumns.map(c => c.fileHeader);
 
         // Combine used headers
-        const usedSet = new Set([...usedInStandard, ...warehouseFileHeaders]);
+        const usedSet = new Set([...usedInStandard, ...warehouseFileHeaders, ...pricePolicyFileHeaders]);
 
         return analysis.fileHeaders.filter(h => !usedSet.has(h));
     };
@@ -118,6 +155,12 @@ const ImportModal = ({ onClose, externalScenario }) => {
         col.status !== 'MATCHED' || !warehouseMapping[col.fileHeader]
     );
     const hasWarehouseBlockingError = analysis && currentSystemWarehouses.length === 1 && hasUnresolvedWarehouses;
+
+    // Check for Blocking Price Policy Error (Store has NO policies but file has policy columns)
+    const hasPricePolicyBlockingError = analysis &&
+        analysis.pricePolicyColumns &&
+        analysis.pricePolicyColumns.length > 0 &&
+        currentSystemPricePolicies.length === 0;
 
     return (
         <div className="modal-backdrop">
@@ -276,6 +319,16 @@ const ImportModal = ({ onClose, externalScenario }) => {
                             mappingState={warehouseMapping}
                             onMappingChange={handleWarehouseMappingChange}
                             systemWarehouses={currentSystemWarehouses}
+                        />
+                    )}
+
+                    {/* Price Policy Mapping Resolution */}
+                    {analysis && (
+                        <PricePolicyMapping
+                            analysis={analysis}
+                            mappingState={pricePolicyMapping}
+                            onMappingChange={handlePricePolicyMappingChange}
+                            systemPolicies={currentSystemPricePolicies}
                         />
                     )}
 
