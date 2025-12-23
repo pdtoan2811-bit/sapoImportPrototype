@@ -35,7 +35,8 @@ export const SCENARIOS = {
                     status: "MATCHED",
                     matchedWarehouse: { id: 3, name: "Kho tổng" }
                 }
-            ]
+            ],
+            pricePolicyColumns: []
         }
     },
 
@@ -51,7 +52,8 @@ export const SCENARIOS = {
             missingOptional: ["Đường dẫn/Alias", "Nhãn hiệu"],
             missingColumns: ["Tên sản phẩm*", "Hiển thị*", "Đường dẫn/Alias", "Nhãn hiệu"],
             matchedColumns: {},
-            warehouseColumns: []
+            warehouseColumns: [],
+            pricePolicyColumns: []
         }
     },
 
@@ -70,7 +72,8 @@ export const SCENARIOS = {
                 "Tên sản phẩm*": "Tên sản phẩm*",
                 "Hiển thị*": "Hiển thị*"
             },
-            warehouseColumns: []
+            warehouseColumns: [],
+            pricePolicyColumns: []
         }
     },
 
@@ -102,7 +105,8 @@ export const SCENARIOS = {
                     status: "MATCHED",
                     matchedWarehouse: { id: 1, name: "Chi nhánh 1" }
                 }
-            ]
+            ],
+            pricePolicyColumns: []
         }
     },
 
@@ -137,7 +141,8 @@ export const SCENARIOS = {
                     status: "UNKNOWN",
                     matchedWarehouse: null
                 }
-            ]
+            ],
+            pricePolicyColumns: []
         }
     },
 
