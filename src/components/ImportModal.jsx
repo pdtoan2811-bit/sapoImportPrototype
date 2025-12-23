@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { X, AlertTriangle, AlertOctagon, ChevronDown, CheckCircle, ExternalLink, Info } from 'lucide-react';
 import FileUploader from './FileUploader';
 import MappingResolution from './MappingResolution';
-import { processFile } from '../utils/importLogic';
+import { processFile, SYSTEM_WAREHOUSES } from '../utils/importLogic';
 
 
 const ImportModal = ({ onClose, externalScenario }) => {
@@ -13,6 +13,7 @@ const ImportModal = ({ onClose, externalScenario }) => {
     const [warehouseMapping, setWarehouseMapping] = useState({});
     const [standardMapping, setStandardMapping] = useState({});
     const [importType, setImportType] = useState('normal');
+    const [currentSystemWarehouses, setCurrentSystemWarehouses] = useState(SYSTEM_WAREHOUSES);
 
     // Handle External Scenario Injection (Dev Mode)
     React.useEffect(() => {
@@ -24,6 +25,13 @@ const ImportModal = ({ onClose, externalScenario }) => {
                 setFile(externalScenario.file);
                 const result = externalScenario.analysis;
                 setAnalysis(result);
+
+                // Set Custom Warehouses if scenario has them, otherwise reset to default
+                if (externalScenario.systemWarehouses) {
+                    setCurrentSystemWarehouses(externalScenario.systemWarehouses);
+                } else {
+                    setCurrentSystemWarehouses(SYSTEM_WAREHOUSES);
+                }
 
                 // Reset mappings based on new analysis
                 const initialStandardMapping = { ...result.matchedColumns };
@@ -101,6 +109,15 @@ const ImportModal = ({ onClose, externalScenario }) => {
 
     // Check if critical columns are mapped
     const allRequiredMapped = analysis?.missingRequired.every(req => standardMapping[req]);
+
+    // Check for Blocking Warehouse Error (Single Store Limit)
+    // - There are unmatched warehouse columns (e.g. 'Kho HCM')
+    // - AND the store only has 1 warehouse ('Chi nhánh 1')
+    // This implies the file has MORE warehouses than the store allows.
+    const hasUnresolvedWarehouses = analysis?.warehouseColumns.some(col =>
+        col.status !== 'MATCHED' || !warehouseMapping[col.fileHeader]
+    );
+    const hasWarehouseBlockingError = analysis && currentSystemWarehouses.length === 1 && hasUnresolvedWarehouses;
 
     return (
         <div className="modal-backdrop">
@@ -258,6 +275,7 @@ const ImportModal = ({ onClose, externalScenario }) => {
                             analysis={analysis}
                             mappingState={warehouseMapping}
                             onMappingChange={handleWarehouseMappingChange}
+                            systemWarehouses={currentSystemWarehouses}
                         />
                     )}
 
@@ -295,7 +313,7 @@ const ImportModal = ({ onClose, externalScenario }) => {
                     </button>
                     <button
                         className="sapo-btn sapo-btn-primary"
-                        disabled={!file || (analysis && !allRequiredMapped)}
+                        disabled={!file || (analysis && (!allRequiredMapped || hasWarehouseBlockingError))}
                     >
                         Nhập file
                     </button>

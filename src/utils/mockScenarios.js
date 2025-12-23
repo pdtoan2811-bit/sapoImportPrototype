@@ -106,6 +106,41 @@ export const SCENARIOS = {
         }
     },
 
+    EXCESS_LOCATIONS: {
+        name: "Cửa hàng chỉ có 1 kho (File 2+ cột kho)",
+        description: "Cửa hàng chỉ có 'Chi nhánh 1', nhưng file có cột 'Chi nhánh 1' và 'Kho HCM'. Cột thừa sẽ báo lỗi.",
+        type: "warning",
+        file: { name: "file_thua_kho.xlsx", size: 1024 * 32 },
+        systemWarehouses: [
+            { id: 1, name: 'Chi nhánh 1' }
+        ],
+        analysis: {
+            totalColumns: 35,
+            fileHeaders: ["Tên sản phẩm*", "Hiển thị*", "Chi nhánh 1_Tồn kho", "Kho HCM_Tồn kho"],
+            missingRequired: [],
+            missingOptional: [],
+            missingColumns: [],
+            matchedColumns: {
+                "Tên sản phẩm*": "Tên sản phẩm*",
+                "Hiển thị*": "Hiển thị*"
+            },
+            warehouseColumns: [
+                {
+                    fileHeader: "Chi nhánh 1_Tồn kho",
+                    extractedName: "Chi nhánh 1",
+                    status: "MATCHED",
+                    matchedWarehouse: { id: 1, name: "Chi nhánh 1" }
+                },
+                {
+                    fileHeader: "Kho HCM_Tồn kho",
+                    extractedName: "Kho HCM",
+                    status: "UNKNOWN",
+                    matchedWarehouse: null
+                }
+            ]
+        }
+    },
+
     EMPTY_STATE: {
         name: "Đặt lại trạnh thái (Reset)",
         description: "Xóa toàn bộ dữ liệu mẫu, quay về màn hình upload trống.",
