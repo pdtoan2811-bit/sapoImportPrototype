@@ -16,7 +16,7 @@ export const SCENARIOS = {
                 "Chi nhánh 1_Tồn kho", "Kho tổng_Tồn kho"
             ],
             missingRequired: [],
-            missingOptional: [],
+            missingOptionalSystem: [],
             missingColumns: [],
             matchedColumns: {
                 "Tên sản phẩm*": "Tên sản phẩm*",
@@ -49,7 +49,7 @@ export const SCENARIOS = {
             totalColumns: 30,
             fileHeaders: ["Mã SKU", "Giá", "Mô tả sản phẩm"],
             missingRequired: ["Tên sản phẩm*", "Hiển thị*"],
-            missingOptional: ["Đường dẫn/Alias", "Nhãn hiệu"],
+            missingOptionalSystem: ["Đường dẫn/Alias", "Nhãn hiệu"],
             missingColumns: ["Tên sản phẩm*", "Hiển thị*", "Đường dẫn/Alias", "Nhãn hiệu"],
             matchedColumns: {},
             warehouseColumns: [],
@@ -66,7 +66,7 @@ export const SCENARIOS = {
             totalColumns: 32,
             fileHeaders: ["Tên sản phẩm*", "Hiển thị*", "Mô tả sản phẩm"],
             missingRequired: [],
-            missingOptional: ["Giá", "Mã SKU", "Barcode"],
+            missingOptionalSystem: ["Giá", "Mã SKU", "Barcode"],
             missingColumns: ["Giá", "Mã SKU", "Barcode"],
             matchedColumns: {
                 "Tên sản phẩm*": "Tên sản phẩm*",
@@ -86,7 +86,7 @@ export const SCENARIOS = {
             totalColumns: 35,
             fileHeaders: ["Tên sản phẩm*", "Hiển thị*", "Kho Lạ_Tồn kho", "CN1_Tồn kho"],
             missingRequired: [],
-            missingOptional: [],
+            missingOptionalSystem: [],
             missingColumns: [],
             matchedColumns: {
                 "Tên sản phẩm*": "Tên sản phẩm*",
@@ -122,7 +122,7 @@ export const SCENARIOS = {
             totalColumns: 35,
             fileHeaders: ["Tên sản phẩm*", "Hiển thị*", "Chi nhánh 1_Tồn kho", "Kho HCM_Tồn kho"],
             missingRequired: [],
-            missingOptional: [],
+            missingOptionalSystem: [],
             missingColumns: [],
             matchedColumns: {
                 "Tên sản phẩm*": "Tên sản phẩm*",
@@ -160,7 +160,7 @@ export const SCENARIOS = {
             totalColumns: 40,
             fileHeaders: ["Tên sản phẩm*", "CTL628922_Thêm vào bảng giá", "CTL555888_Thêm vào bảng giá"],
             missingRequired: [],
-            missingOptional: [],
+            missingOptionalSystem: [],
             missingColumns: [],
             matchedColumns: { "Tên sản phẩm*": "Tên sản phẩm*" },
             warehouseColumns: [],
@@ -192,7 +192,7 @@ export const SCENARIOS = {
             totalColumns: 38,
             fileHeaders: ["Tên sản phẩm*", "CTL628922_Thêm vào bảng giá"],
             missingRequired: [],
-            missingOptional: [],
+            missingOptionalSystem: [],
             missingColumns: [],
             matchedColumns: { "Tên sản phẩm*": "Tên sản phẩm*" },
             warehouseColumns: [],

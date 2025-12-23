@@ -57,7 +57,7 @@ export const processFile = async (file) => {
 
 const analyzeHeaders = (fileHeaders) => {
   const matchedColumns = {}; // Map of SystemHeader -> FileHeader
-
+  const missingRequired = [];
 
   // 1. Initial matching of EXPECTED_HEADERS to fileHeaders
   EXPECTED_HEADERS.forEach(expected => {
@@ -105,23 +105,23 @@ const analyzeHeaders = (fileHeaders) => {
     ...pricePolicyColumns.map(c => c.fileHeader)
   ]);
 
-  // Find MISSING OPTIONAL columns:
-  // These are headers present in the fileHeaders but are NOT:
-  // 1. An exact match for an EXPECTED_HEADER
-  // 2. A warehouse column
-  // 3. A price policy column
-  // 4. An EXPECTED_HEADER that was not found (those are in missingRequired)
-  const missingOptional = fileHeaders.filter(h =>
-    !allExpectedHeadersSet.has(h) && // Not an expected header (either matched or missing required)
+  // Find MISSING STANDARD OPTIONAL columns (System headers not required and not in file)
+  const missingOptionalSystem = EXPECTED_HEADERS.filter(h =>
+    !h.endsWith('*') && !fileHeaders.includes(h)
+  );
+
+  // Find EXTRA columns in file (Not Expected, Not Warehouse, Not PricePolicy)
+  const extraHeaders = fileHeaders.filter(h =>
+    !allExpectedHeadersSet.has(h) && // Not an expected header
     !specialColumnsInFile.has(h) // Not a special column (warehouse or price policy)
   );
 
   return {
     totalColumns: fileHeaders.length,
     fileHeaders: fileHeaders,
-    missingRequired: missingRequired, // Only strict required missing
-    missingOptional: missingOptional, // Extra columns in file needing mapping
-    missingColumns: [], // Deprecated, kept for compatibility if needed
+    missingRequired: missingRequired, // Strict required missing
+    missingOptionalSystem: missingOptionalSystem, // System optional headers missing from file
+    extraHeaders: extraHeaders, // Unknown/Extra columns in file
     matchedColumns: matchedColumns,
     warehouseColumns: warehouseColumns,
     pricePolicyColumns: pricePolicyColumns

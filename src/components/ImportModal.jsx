@@ -13,7 +13,6 @@ const ImportModal = ({ onClose, externalScenario }) => {
 
     const [warehouseMapping, setWarehouseMapping] = useState({});
     const [pricePolicyMapping, setPricePolicyMapping] = useState({});
-    const [standardMapping, setStandardMapping] = useState({});
     const [importType, setImportType] = useState('normal');
     const [currentSystemWarehouses, setCurrentSystemWarehouses] = useState(SYSTEM_WAREHOUSES);
     const [currentSystemPricePolicies, setCurrentSystemPricePolicies] = useState(SYSTEM_PRICE_POLICIES);
@@ -35,10 +34,6 @@ const ImportModal = ({ onClose, externalScenario }) => {
                 } else {
                     setCurrentSystemWarehouses(SYSTEM_WAREHOUSES);
                 }
-
-                // Reset mappings based on new analysis
-                const initialStandardMapping = { ...result.matchedColumns };
-                setStandardMapping(initialStandardMapping);
 
                 const initialWarehouseMapping = {};
                 if (result.warehouseColumns) {
@@ -77,9 +72,6 @@ const ImportModal = ({ onClose, externalScenario }) => {
             const result = await processFile(selectedFile);
             setAnalysis(result);
 
-            const initialStandardMapping = { ...result.matchedColumns };
-            setStandardMapping(initialStandardMapping);
-
             // ... (rest of logic handles warehouse mapping init)
             const initialWarehouseMapping = {};
             result.warehouseColumns.forEach(col => {
@@ -110,7 +102,6 @@ const ImportModal = ({ onClose, externalScenario }) => {
         setFile(null);
         setAnalysis(null);
         setWarehouseMapping({});
-        setStandardMapping({});
     };
 
     const handleWarehouseMappingChange = (fileHeader, warehouseId) => {
@@ -121,31 +112,9 @@ const ImportModal = ({ onClose, externalScenario }) => {
         setPricePolicyMapping(prev => ({ ...prev, [fileHeader]: policyId }));
     };
 
-    const handleStandardMappingChange = (systemField, fileHeader) => {
-        setStandardMapping(prev => ({ ...prev, [systemField]: fileHeader }));
-    };
 
-    // Helper: Filter available columns for dropdown
-    const getAvailableFileHeaders = (currentSystemField) => {
-        if (!analysis) return [];
 
-        // 1. Get all file headers used in Standard Mapping (excluding current field's value)
-        const usedInStandard = Object.entries(standardMapping)
-            .filter(([sysField, val]) => sysField !== currentSystemField && val)
-            .map(([_, val]) => val);
 
-        // 2. Get all file headers used in Warehouse Mapping
-        const warehouseFileHeaders = analysis.warehouseColumns.map(c => c.fileHeader);
-        const pricePolicyFileHeaders = analysis.pricePolicyColumns.map(c => c.fileHeader);
-
-        // Combine used headers
-        const usedSet = new Set([...usedInStandard, ...warehouseFileHeaders, ...pricePolicyFileHeaders]);
-
-        return analysis.fileHeaders.filter(h => !usedSet.has(h));
-    };
-
-    // Check if critical columns are mapped
-    const allRequiredMapped = analysis?.missingRequired.every(req => standardMapping[req]);
 
     // Check for Blocking Warehouse Error (Single Store Limit)
     // - There are unmatched warehouse columns (e.g. 'Kho HCM')
@@ -214,100 +183,52 @@ const ImportModal = ({ onClose, externalScenario }) => {
                         onClearFile={handleClear}
                     />
 
-                    {/* SECTION 1: REQUIRED MISSING COLUMNS (SEVERE) */}
+                    {/* SECTION 1: REQUIRED MISSING COLUMNS (BLOCKING) */}
                     {analysis && analysis.missingRequired.length > 0 && (
                         <div className="flex-col gap-4">
                             <div className="error-box" style={{ flexDirection: 'row', alignItems: 'center', color: '#991B1B', background: '#FEF2F2', borderColor: '#FECACA' }}>
                                 <AlertOctagon size={18} />
-                                <span className="font-bold text-sm">Cần ghép nối các cột bắt buộc còn thiếu:</span>
+                                <span className="font-bold text-sm">File thiếu các cột bắt buộc sau (Không thể nhập file):</span>
                             </div>
 
-                            <div style={{ border: '1px solid #E5E7EB', borderRadius: '8px', overflow: 'hidden', marginTop: '16px' }}>
-                                {analysis.missingRequired.map((reqField, idx) => {
-                                    const availableOptions = getAvailableFileHeaders(reqField);
-
-                                    return (
-                                        <div key={idx} className="mapping-row">
-                                            <div style={{ flex: 1 }}>
-                                                <span className="font-bold text-sm block">{reqField}</span>
-                                                <span className="text-xs text-red">Bắt buộc</span>
-                                            </div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <span style={{ fontSize: '13px', color: '#6B7280' }}>Ghép với cột file:</span>
-                                                {availableOptions.length > 0 ? (
-                                                    <div style={{ position: 'relative' }}>
-                                                        <select
-                                                            className="mapping-select"
-                                                            value={standardMapping[reqField] || ''}
-                                                            onChange={(e) => handleStandardMappingChange(reqField, e.target.value)}
-                                                        >
-                                                            <option value="">-- Chọn cột --</option>
-                                                            {availableOptions.map((h, i) => (
-                                                                <option key={i} value={h}>{h}</option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
-                                                ) : (
-                                                    <div style={{ fontSize: '12px', color: '#DC2626', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                        <span>Không tìm thấy cột phù hợp.</span>
-                                                    </div>
-                                                )}
-                                                {standardMapping[reqField] ? (
-                                                    <CheckCircle size={20} className="text-green" />
-                                                ) : (
-                                                    <AlertOctagon size={20} color="#D1D5DB" />
-                                                )}
-                                            </div>
+                            <div style={{ border: '1px solid #FECACA', borderRadius: '8px', overflow: 'hidden', marginTop: '16px', background: '#FFF' }}>
+                                {analysis.missingRequired.map((reqField, idx) => (
+                                    <div key={idx} className="mapping-row" style={{ padding: '12px 16px', borderBottom: '1px solid #FEE2E2' }}>
+                                        <div style={{ flex: 1 }}>
+                                            <span className="font-bold text-sm block" style={{ color: '#B91C1C' }}>{reqField}</span>
+                                            <span className="text-xs text-red">Bắt buộc</span>
                                         </div>
-                                    );
-                                })}
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <span style={{ fontSize: '12px', color: '#DC2626', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                <AlertOctagon size={14} />
+                                                Thiếu cột
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     )}
 
-                    {/* SECTION 2: OPTIONAL MISSING COLUMNS (SUBTLE) */}
-                    {analysis && analysis.missingOptional.length > 0 && (
+                    {/* SECTION 2: OPTIONAL MISSING SYSTEM COLUMNS (SUBTLE/GREY) */}
+                    {analysis && analysis.missingOptionalSystem && analysis.missingOptionalSystem.length > 0 && (
                         <div className="flex-col gap-4">
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '4px', color: '#374151' }}>
                                 <Info size={18} color="#6B7280" />
-                                <span className="font-medium text-sm">Có {analysis.missingOptional.length} cột thông tin khác chưa được ghép nối (Không bắt buộc)</span>
+                                <span className="font-medium text-sm">File thiếu {analysis.missingOptionalSystem.length} cột thông tin (Không bắt buộc) - Hệ thống sẽ để trống các trường này</span>
                             </div>
 
-                            {/* Scrollable container for optional fields if list is long */}
-                            <div style={{ border: '1px solid #E5E7EB', borderRadius: '8px', overflow: 'hidden', marginTop: '8px', maxHeight: '300px', overflowY: 'auto' }} className="custom-scrollbar">
-                                {analysis.missingOptional.map((optField, idx) => {
-                                    const availableOptions = getAvailableFileHeaders(optField);
-
-                                    return (
-                                        <div key={idx} className="mapping-row">
-                                            <div style={{ flex: 1 }}>
-                                                <span className="font-medium text-sm block" style={{ color: '#4B5563' }}>{optField}</span>
-                                            </div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <span style={{ fontSize: '13px', color: '#9CA3AF' }}>Ghép với:</span>
-                                                {availableOptions.length > 0 ? (
-                                                    <div style={{ position: 'relative' }}>
-                                                        <select
-                                                            className="mapping-select"
-                                                            style={{ borderColor: '#E5E7EB', color: '#4B5563' }}
-                                                            value={standardMapping[optField] || ''}
-                                                            onChange={(e) => handleStandardMappingChange(optField, e.target.value)}
-                                                        >
-                                                            <option value="">-- Chọn cột --</option>
-                                                            {availableOptions.map((h, i) => (
-                                                                <option key={i} value={h}>{h}</option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
-                                                ) : (
-                                                    <span style={{ fontSize: '12px', color: '#9CA3AF', fontStyle: 'italic' }}>Không có cột phù hợp</span>
-                                                )}
-
-                                                {standardMapping[optField] && <CheckCircle size={16} className="text-green" />}
-                                            </div>
+                            <div style={{ border: '1px solid #E5E7EB', borderRadius: '8px', overflow: 'hidden', marginTop: '8px', maxHeight: '200px', overflowY: 'auto' }} className="custom-scrollbar">
+                                {analysis.missingOptionalSystem.map((optField, idx) => (
+                                    <div key={idx} className="mapping-row" style={{ padding: '10px 16px' }}>
+                                        <div style={{ flex: 1 }}>
+                                            <span className="font-medium text-sm block" style={{ color: '#4B5563' }}>{optField}</span>
                                         </div>
-                                    );
-                                })}
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <span style={{ fontSize: '12px', color: '#9CA3AF', fontStyle: 'italic' }}>Sẽ bỏ trống</span>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     )}
@@ -366,7 +287,7 @@ const ImportModal = ({ onClose, externalScenario }) => {
                     </button>
                     <button
                         className="sapo-btn sapo-btn-primary"
-                        disabled={!file || (analysis && (!allRequiredMapped || hasWarehouseBlockingError))}
+                        disabled={!file || (analysis && (analysis.missingRequired.length > 0 || hasWarehouseBlockingError))}
                     >
                         Nhập file
                     </button>
